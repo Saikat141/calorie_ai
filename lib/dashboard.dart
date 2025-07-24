@@ -26,7 +26,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'CalorieAI',
+                    'Calorie AI',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
