@@ -112,7 +112,7 @@ class _AuthScreenState extends State<AuthScreen>
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => DashboardPage(email_Id: email),
+              builder: (context) => DashboardPage(emailId: email),
             ),
           );
         }

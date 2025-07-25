@@ -44,7 +44,9 @@ dependencies:
   cloud_firestore: ^5.4.4
   image_picker: ^1.0.4
   intl: ^0.18.1
-
+  image: ^4.2.0
+  firebase_ml_model_downloader: ^0.3.3+8
+  tflite_flutter: ^0.11.0
 
 
 
