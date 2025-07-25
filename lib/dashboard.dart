@@ -166,6 +166,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+
                               Text(
                                 'No meals logged yet',
                                 style: TextStyle(
@@ -173,6 +174,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                     fontSize: 16),
                               ),
                               SizedBox(height: 4),
+
                               Text(
                                 'Take a photo of your meal to get AI-powered calorie tracking',
                                 style:
