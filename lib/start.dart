@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'auth.dart';
 import 'dashboard.dart';
 
 class CalorieAIScreen extends StatelessWidget {
@@ -126,7 +127,7 @@ class CalorieAIScreen extends StatelessWidget {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => DashboardPage(), // Replace with actual email
+                            builder: (context) => AuthScreen(), // Replace with actual email
                           ),
                         );
                       },
