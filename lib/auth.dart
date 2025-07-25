@@ -1,5 +1,7 @@
+import 'package:calorie_ai/dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -11,11 +13,10 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateMixin {
   bool isSignUp = false;
 
-
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-
+  final _formKey = GlobalKey<FormState>();
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -36,7 +37,97 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   @override
   void dispose() {
     _tabController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  void _handleAuthAction() async {
+    if (_formKey.currentState?.validate() ?? false) {
+      final email = _emailController.text.trim();
+      final password = _passwordController.text.trim();
+
+      try {
+        if (isSignUp) {
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+            email: email,
+            password: password,
+          );
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Account created for $email")),
+          );
+
+
+        } else {
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+            email: email,
+            password: password,
+          );
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Welcome back, $email")),
+          );
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => DashboardPage(email_Id: email)),
+          );
+        }
+      } on FirebaseAuthException catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: ${e.message}")),
+        );
+      }
+    }
+  }
+
+  void _showForgotPasswordDialog() {
+    final TextEditingController emailController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Forgot Password"),
+        content: TextField(
+          controller: emailController,
+          decoration: const InputDecoration(
+            hintText: "Enter your email",
+          ),
+        ),
+        actions: [
+          TextButton(
+            child: const Text("Cancel"),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          ElevatedButton(
+            child: const Text("Send Reset Link"),
+            onPressed: () async {
+              final email = emailController.text.trim();
+
+              if (email.isEmpty || !email.contains('@')) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Please enter a valid email")),
+                );
+                return;
+              }
+
+              try {
+                await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Reset link sent to $email")),
+                );
+              } on FirebaseAuthException catch (e) {
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Error: ${e.message}")),
+                );
+              }
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -66,108 +157,134 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                   )
                 ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Calorie AI",
-                    style: GoogleFonts.poppins(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple,
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Calorie AI",
+                      style: GoogleFonts.poppins(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepPurple,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
 
-                  // Tab Bar
-                  TabBar(
-                    controller: _tabController,
-                    indicatorColor: Colors.deepPurple,
-                    labelColor: Colors.black,
-                    unselectedLabelColor: Colors.grey,
-                    indicatorWeight: 3,
-                    labelStyle: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                    const SizedBox(height: 24),
+
+                    // Tab Bar
+                    TabBar(
+                      controller: _tabController,
+                      indicatorColor: Colors.deepPurple,
+                      labelColor: Colors.black,
+                      unselectedLabelColor: Colors.grey,
+                      indicatorWeight: 3,
+                      labelStyle: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      tabs: const [
+                        Tab(text: "Sign In"),
+                        Tab(text: "Sign Up"),
+                      ],
                     ),
-                    tabs: const [
-                      Tab(text: "Sign In"),
-                      Tab(text: "Sign Up"),
-                    ],
-                  ),
 
-                  const SizedBox(height: 24),
-                  Text(
-                    isSignUp
-                        ? "Let's create your account"
-                        : "Welcome back! Please login.",
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: Colors.grey[700],
+                    const SizedBox(height: 24),
+                    Text(
+                      isSignUp
+                          ? "Let's create your account"
+                          : "Welcome back! Please login.",
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: Colors.grey[700],
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                  ),
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                  // Email
-                  _buildInputField("Email", _emailController, false),
-
-                  const SizedBox(height: 16),
-
-                  // Password
-                  _buildInputField("Password", _passwordController, _obscurePassword, toggle: () {
-                    setState(() => _obscurePassword = !_obscurePassword);
-                  }),
-
-                  const SizedBox(height: 16),
-
-                  // Confirm Password (only for Sign Up)
-                  if (isSignUp)
-                    _buildInputField("Confirm Password", _confirmPasswordController,
-                        _obscureConfirmPassword, toggle: () {
-                          setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
-                        }),
-
-                  const SizedBox(height: 32),
-
-                  // Action Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // TODO: Authenticate
+                    // Email
+                    _buildInputField(
+                      "Email",
+                      _emailController,
+                      false,
+                      validator: (value) {
+                        if (value == null || value.isEmpty || !value.contains('@')) {
+                          return "Please enter a valid email";
+                        }
+                        return null;
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.deepPurple,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(32),
-                        ),
-                        elevation: 4,
-                      ),
-                      child: Text(
-                        isSignUp ? "Create Account" : "Sign In",
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white
-                        ),
-                      ),
                     ),
-                  ),
+                    const SizedBox(height: 16),
 
-                  if (!isSignUp)
-                    Center(
-                      child: TextButton(
-                        onPressed: () {
-                          // TODO: Forgot password logic
+                    // Password
+                    _buildInputField(
+                      "Password",
+                      _passwordController,
+                      _obscurePassword,
+                      toggle: () => setState(() => _obscurePassword = !_obscurePassword),
+                      validator: (value) {
+                        if (value == null || value.length < 6) {
+                          return "Password must be at least 6 characters";
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Confirm Password (only for Sign Up)
+                    if (isSignUp)
+                      _buildInputField(
+                        "Confirm Password",
+                        _confirmPasswordController,
+                        _obscureConfirmPassword,
+                        toggle: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                        validator: (value) {
+                          if (value != _passwordController.text) {
+                            return "Passwords do not match";
+                          }
+                          return null;
                         },
-                        child: const Text(
-                          "Forgot Password?",
-                          style: TextStyle(color: Colors.black45),
+                      ),
+
+                    const SizedBox(height: 32),
+
+                    // Action Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _handleAuthAction,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepPurple,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(32),
+                          ),
+                          elevation: 4,
+                        ),
+                        child: Text(
+                          isSignUp ? "Create Account" : "Sign In",
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
-                ],
+
+                    if (!isSignUp)
+                      Center(
+                        child: TextButton(
+                          onPressed: _showForgotPasswordDialog,
+                          child: const Text(
+                            "Forgot Password?",
+                            style: TextStyle(color: Colors.black45),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -181,10 +298,12 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       TextEditingController controller,
       bool obscure, {
         VoidCallback? toggle,
+        String? Function(String?)? validator,
       }) {
-    return TextField(
+    return TextFormField(
       controller: controller,
       obscureText: obscure,
+      validator: validator,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: GoogleFonts.poppins(),

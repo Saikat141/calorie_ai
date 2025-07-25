@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
+  const DashboardPage({super.key, required String email_Id});
 
   @override
   _DashboardPageState createState() => _DashboardPageState();

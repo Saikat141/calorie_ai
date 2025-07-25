@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'auth.dart';
-import 'dashboard.dart';
 
 class CalorieAIScreen extends StatelessWidget {
   const CalorieAIScreen({super.key});
